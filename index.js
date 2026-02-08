@@ -4,11 +4,13 @@ import bodyParser from 'body-parser';
 import mongoose from 'mongoose';
 import userRouter from "./routes/userRouter.js";
 import issueRouter from "./routes/issueRouter.js";
+import {authUser} from "./middleware/auth.middleware.js";
 
 dotenv.config();
 
 let app = express();
 app.use(bodyParser.json());
+app.use(authUser)
 
 app.use("/api/user", userRouter);
 app.use("/api/issue", issueRouter);
