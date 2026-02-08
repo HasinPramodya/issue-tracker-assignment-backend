@@ -1,5 +1,6 @@
 import User from "../models/user.js";
 import bcrypt from "bcrypt"
+import jwt from "jsonwebtoken";
 
 export function createUser(req,res){
 
@@ -8,6 +9,7 @@ export function createUser(req,res){
 
     const user = new User({
         email: req.body.email,
+        name: req.body.name,
         password: hashedPassword
     })
 
@@ -35,8 +37,15 @@ export function loginUser(req,res){
             })
         }else{
             if(bcrypt.compareSync(req.body.password, user.password)){
+                const userData = {
+                    email: user.email,
+                    name: user.name,
+                    role: user.role,
+                }
+                const token = jwt.sign(userData, process.env.JWT_KEY)
                 res.status(200).json({
-                    message : "Login Successfully",
+                    message: "Login successfully",
+                    token: token
                 })
             }else{
                 res.status(500).json({
