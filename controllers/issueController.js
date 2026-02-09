@@ -1,92 +1,133 @@
 import Issue from "../models/issue.js";
+import User from "../models/user.js";
+import issue from "../models/issue.js";
 
-export function createIssue(req, res) {
+export async function createIssue(req, res) {
+    console.log(req.user);
   if(req.user.role !== "admin") {
       res.status(403).json({
           message: "Not authorized to create issue",
       })
       return;
   }
-
-  const issue = new Issue(req.body)
-  issue.save().then(
-      ()=>{
+  try{
+      const assigneeuser = await User.findOne({
+          name: req.body.assignee,
+      })
+      if(assigneeuser === null){
+          res.status(403).json({
+              message: "Assignee not found",
+          })
+      }else{
+          const issue = new Issue({
+              title: req.body.title,
+              description: req.body.description,
+              status: req.body.status,
+              priority: req.body.priority,
+              assignee: assigneeuser._id
+          })
+          await issue.save()
           res.status(201).json({
-              message: "Created Issue",
-              issue : issue
+              message: "Successfully created issue",
           })
       }
-  )
+  }catch(err){
+      res.status(404).json({
+          message: "issue can not be created",
+      })
+  }
+
 
 }
 
-export function getAllIssues(req,res) {
-    Issue.find().then((issues)=>{
-        res.status(200).json({
+export async function getAllIssues(req,res) {
+    try {
+        const issues = await Issue.find()
+        return res.status(200).json({
             message:"All Issues",
             issues : issues
         })
-    }).catch(()=>{
-        res.status(403).json({
-            message: "products not found"
+    }catch (err){
+        res.status(500).json({
+            message: "can not get issues",
         })
-    })
+    }
+
 }
 
-export function getIssueByTitle(req, res) {
-    Issue.findOne({
-        title: req.params.title
-    }).then((issue)=>{
-        if(issue == null){
-            res.status(404).json({
-                message: "Issue Not found",
+export async function getIssueByTitle(req, res) {
+    if(req.user===null){
+        res.status(403).json({
+            message: "please login first"
+        })
+        return;
+    }
+    try{
+        const issue = await Issue.findOne({
+            title: req.params.title
+        })
+        if (issue === null){
+            res.status(403).json({
+                message: "issue not found"
             })
         }else{
             res.status(200).json({
-                issue: issue,
+                issue : issue
             })
         }
-    }).catch(()=>{
-        res.status(404).json({})
-    })
-
-
-}
-
-export function updateIssue(req, res) {
-    Issue.findOneAndUpdate({
-        title: req.params.title,
-    }).then(
-        ()=>{
-            res.status(200).json({
-                message: "Updated Issue",
-            })
-        }
-    ).catch(()=>{
-        res.status(403).json({
-            message: "products can not be updated",
+    }catch (err){
+        res.status(500).json({
+            message: "can not get issue",
         })
-    })
+    }
+
+
 
 }
 
-export function deleteIssue(req, res) {
+export async function updateIssue(req, res) {
+    console.log(req.user)
+    if (req.user === null) {
+        res.status(403).json({
+            message: "please login first"
+        })
+        return;
+    }
+    try{
+        await Issue.findOneAndUpdate({
+            title: req.params.title,
+        },req.body)
+        res.status(200).json({
+            message: "Updated Issue",
+            issue : issue
+        })
+    }catch (err){
+        res.status(500).json({
+            message: err.message
+        })
+    }
+
+
+}
+
+export async function deleteIssue(req, res) {
     if(req.user.role !== "admin") {
         res.status(403).json({
             message: "Not authorized to create issue",
         })
         return;
     }
-
-    Issue.findOneAndDelete({
-        title: req.params.title
-    }).then(()=>{
+    try{
+        await Issue.findOneAndDelete({
+            title: req.params.title
+        })
         res.status(200).json({
-            message: "Issue Deleted",
+            message: "Deleted Issue",
         })
-    }).catch((error)=>{
-        res.status(403).json({
-            message: "product cannot be deleted",
+    }catch (err){
+        res.status(500).json({
+            message: "can not delete issue",
         })
-    })
+    }
+
 }
