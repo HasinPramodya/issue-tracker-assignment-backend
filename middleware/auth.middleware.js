@@ -3,11 +3,16 @@ import dotenv from 'dotenv'
 dotenv.config()
 
 export function authUser(req, res, next) {
-    const token = req.headers.authorization.replace("Bearer ", "");
-    jwt.verify(token, process.env.JWT_KEY, (err, decoded) => {
-        if (decoded != null) {
-            req.user = decoded;
-        }
-    });
+    const header = req.header("Authorization");
+    if (header) {
+        const token = header.replace("Bearer ", "");
+        jwt.verify(token,process.env.JWT_KEY, (err, decode) => {
+            console.log(decode);
+            if (decode !== null) {
+                req.user = decode;
+
+            }
+        });
+    }
     next()
 }
