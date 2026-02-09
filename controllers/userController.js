@@ -2,7 +2,7 @@ import User from "../models/user.js";
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken";
 
-export function createUser(req,res){
+export async function createUser(req,res){
 
     const hashedPassword = bcrypt.hashSync(req.body.password, 10);
     console.log(hashedPassword);
@@ -10,12 +10,13 @@ export function createUser(req,res){
     const user = new User({
         email: req.body.email,
         name: req.body.name,
-        password: hashedPassword
+        password: hashedPassword,
+        role: req.body.role,
     })
 
     user.save().then(()=>{
         res.status(201).json({
-            message: "User saved successfully",
+            message: "User created successfully",
         })
     }).catch(
         ()=>{
@@ -26,11 +27,12 @@ export function createUser(req,res){
     )
 }
 
-export function loginUser(req,res){
+export async function loginUser(req,res){
 
     User.findOne({
         email: req.body.email,
     }).then((user)=>{
+        console.log(user);
         if(user == null){
             res.status(404).json({
                 message: "Invalid email or password",
