@@ -1,53 +1,59 @@
 import Issue from "../models/issue.js";
 import User from "../models/user.js";
-import issue from "../models/issue.js";
+
 
 export async function createIssue(req, res) {
     console.log(req.user);
-  if(req.user.role !== "admin") {
-      res.status(403).json({
-          message: "Not authorized to create issue",
-      })
-      return;
-  }
-  try{
-      const assigneeuser = await User.findOne({
-          name: req.body.assignee,
-      })
-      if(assigneeuser === null){
-          res.status(403).json({
-              message: "Assignee not found",
-          })
-      }else{
-          const issue = new Issue({
-              title: req.body.title,
-              description: req.body.description,
-              status: req.body.status,
-              priority: req.body.priority,
-              assignee: assigneeuser._id
-          })
-          await issue.save()
-          res.status(201).json({
-              message: "Successfully created issue",
-          })
-      }
-  }catch(err){
-      res.status(404).json({
-          message: "issue can not be created",
-      })
-  }
+    if (req.user.role !== "admin") {
+        res.status(403).json({
+            message: "Not authorized to create issue",
+        })
+        return;
+    }
+    try {
+        const assigneeuser = await User.findOne({
+            name: req.body.assignee,
+        })
+        if (assigneeuser === null) {
+            res.status(403).json({
+                message: "Assignee not found",
+            })
+        } else {
+            const issue = new Issue({
+                title: req.body.title,
+                description: req.body.description,
+                status: req.body.status,
+                priority: req.body.priority,
+                assignee: assigneeuser._id
+            })
+            await issue.save()
+            res.status(201).json({
+                message: "Successfully created issue",
+            })
+        }
+    } catch (err) {
+        res.status(404).json({
+            message: "issue can not be created",
+        })
+    }
 
 
 }
 
-export async function getAllIssues(req,res) {
+export async function getAllIssues(req, res) {
+    if (req.user === null) {
+        res.status(403).json({
+            message: "please login first"
+        })
+        return;
+    }
     try {
         const issues = await Issue.find()
         return res.status(200).json({
-            message:"All Issues",
-            issues : issues
+            message: "All Issues",
+            issues: issues
         })
-    }catch (err){
+    } catch (err) {
         res.status(500).json({
             message: "can not get issues",
         })
@@ -56,26 +62,26 @@ export async function getAllIssues(req,res) {
 }
 
 export async function getIssueByTitle(req, res) {
-    if(req.user===null){
+    if (req.user === null) {
         res.status(403).json({
             message: "please login first"
         })
         return;
     }
-    try{
+    try {
         const issue = await Issue.findOne({
             title: req.params.title
         })
-        if (issue === null){
+        if (issue === null) {
             res.status(403).json({
                 message: "issue not found"
             })
-        }else{
+        } else {
             res.status(200).json({
-                issue : issue
+                issue: issue
             })
         }
-    }catch (err){
+    } catch (err) {
         res.status(500).json({
             message: "can not get issue",
         })
@@ -93,15 +99,20 @@ export async function updateIssue(req, res) {
         })
         return;
     }
-    try{
-        await Issue.findOneAndUpdate({
+    try {
+        const updatedIssue = await Issue.findOneAndUpdate({
             title: req.params.title,
-        },req.body)
+        }, req.body, { new: true });
+
+        if (!updatedIssue) {
+            return res.status(404).json({ message: "Issue not found" });
+        }
+
         res.status(200).json({
             message: "Updated Issue",
-            issue : issue
+            issue: updatedIssue
         })
-    }catch (err){
+    } catch (err) {
         res.status(500).json({
             message: err.message
         })
@@ -111,20 +122,20 @@ export async function updateIssue(req, res) {
 }
 
 export async function deleteIssue(req, res) {
-    if(req.user.role !== "admin") {
+    if (req.user.role !== "admin") {
         res.status(403).json({
             message: "Not authorized to create issue",
         })
         return;
     }
-    try{
+    try {
         await Issue.findOneAndDelete({
             title: req.params.title
         })
         res.status(200).json({
             message: "Deleted Issue",
         })
-    }catch (err){
+    } catch (err) {
         res.status(500).json({
             message: "can not delete issue",
         })
