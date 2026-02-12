@@ -71,7 +71,7 @@ export async function getIssueByTitle(req, res) {
     try {
         const issue = await Issue.findOne({
             title: req.params.title
-        })
+        }).populate('assignee', 'name')
         if (issue === null) {
             res.status(403).json({
                 message: "issue not found"
@@ -141,4 +141,33 @@ export async function deleteIssue(req, res) {
         })
     }
 
+}
+
+export async function getIssueCounts(req, res) {
+    if (req.user === null) {
+        res.status(403).json({
+            message: "please login first"
+        })
+        return;
+    }
+
+    try {
+        const totalIssues = await Issue.countDocuments();
+        const openIssues = await Issue.countDocuments({ status: "Open" });
+        const inProgressIssues = await Issue.countDocuments({ status: "In-Progress" });
+        const resolvedIssues = await Issue.countDocuments({ status: "Resolved" });
+
+        res.status(200).json({
+            total: totalIssues,
+            open: openIssues,
+            resolved: resolvedIssues,
+            InProgress: inProgressIssues
+        });
+
+    } catch (err) {
+        res.status(500).json({
+            message: "Cannot get issue counts",
+            error: err.message
+        });
+    }
 }
