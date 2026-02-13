@@ -14,8 +14,8 @@ app.use(bodyParser.json());
 app.use(cors());
 app.use(authUser)
 
-app.use("api/user", userRouter);
-app.use("api/issue", issueRouter);
+app.use("/api/user", userRouter);
+app.use("/api/issue", issueRouter);
 
 
 
