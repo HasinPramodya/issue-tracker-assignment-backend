@@ -14,6 +14,10 @@ app.use(bodyParser.json());
 app.use(cors());
 app.use(authUser)
 
+app.get("/", (req, res) => {
+    res.send("Backend is running!");
+})
+
 app.use("/api/user", userRouter);
 app.use("/api/issue", issueRouter);
 
